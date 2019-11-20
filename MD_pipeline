@@ -1,0 +1,80 @@
+#initial steps are missing.
+
+
+#go through all the pdb files and create parameter files,solvation file and ionisation files with default values
+foreach file [glob -nocomplain "./*/"] {
+cd $file
+source autopsf_step.tcl 
+cd ..
+}
+
+foreach file [glob -nocomplain "./*/"] {
+cd $file
+source autopsf_ion_solv.tcl
+cd ..
+}
+#cleaning lines ;can be ignored
+while IFS= read -rd '' d; do
+   [[ -f $d/ionized.pdb ]] && echo mv "$d" complete
+done < <(find test -type d -print0)
+
+#copy sbatch files to all folders contains simulation files
+for d in */; do cp *.sh "$d"; done
+
+#rename the folders with simulation files numbered wise
+i=1; for dir in */; do mv "$dir" i;i=$(( i + 1 )); done
+i++
+
+i=$(( i + 1 ))
+
+#changing the working directory of script files
+PWD=`pwd`
+awk -v pwd="$PWD" '
+/myWork/{
+  sub(/=.*/,"=" pwd)
+}
+/SBATCH/{
+  sub(/workdir=.*/,"workdir=" pwd)
+}
+1
+' run_min.sh > temp && mv temp run_min.sh
+
+
+PWD=`pwd`
+awk -v pwd="$PWD" '
+/myWork/{
+  sub(/=.*/,"=" pwd)
+}
+/SBATCH/{
+  sub(/workdir=.*/,"workdir=" pwd)
+}
+1
+' run_eqbr.sh > temp && mv temp run_eqbr.sh
+
+PWD=`pwd`
+awk -v pwd="$PWD" '
+/myWork/{
+  sub(/=.*/,"=" pwd)
+}
+/SBATCH/{
+  sub(/workdir=.*/,"workdir=" pwd)
+}
+1
+' run_prod.sh > temp && mv temp run_prod.sh
+
+#create a result folder inside the working folder for storing simulation results
+for dir in */; do mkdir -- "$dir/result"; done
+
+#run all the jobs on cluster altogether
+for file in ./*/*.sh; do
+    sbatch "$file"
+done
+
+
+
+#checking the 
+for file in ./*/*.sh; do
+    head "$file"
+done
+
+
