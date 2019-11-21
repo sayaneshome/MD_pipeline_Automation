@@ -1,6 +1,11 @@
 #initial steps are missing.
 
 
+
+for d in ./*/ ; do
+    mv "$d/"*.pdb "$d/"test.pdb
+done
+
 #go through all the pdb files and create parameter files,solvation file and ionisation files with default values
 foreach file [glob -nocomplain "./*/"] {
 cd $file
